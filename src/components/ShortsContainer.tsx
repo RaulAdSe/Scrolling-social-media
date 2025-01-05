@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { ShortCard } from './ShortCard';
-import { ShortsProps } from '../types/content';
+import { Short, ShortsProps } from '../types/content';
 
 const ShortsContainer: React.FC<ShortsProps> = ({
   items,
@@ -50,7 +50,7 @@ const ShortsContainer: React.FC<ShortsProps> = ({
 
   return (
     <div className="snap-y snap-mandatory h-screen overflow-y-scroll">
-      {items.map((item, index) => (
+      {items.map((item: Short, index: number) => (
         <div
           key={item.id}
           ref={index === items.length - 1 ? lastElementRef : undefined}

@@ -1,14 +1,14 @@
 // src/services/api.ts
-import { Short, ShortsResponse } from '../types/content';
+import { Short, ShortsResponse, VideoCategory } from '../types/content';
 
 export const fetchShorts = async (
   cursor?: string,
+  category?: VideoCategory,
   limit: number = 5
 ): Promise<ShortsResponse> => {
   try {
     // Using reliable CDN hosted videos
     const demoVideos = [
-      'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
       'https://d2zihajmogu5jn.cloudfront.net/big-buck-bunny/bbb.mp4',
       'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
       'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
@@ -16,7 +16,6 @@ export const fetchShorts = async (
     ];
 
     const videoTitles = [
-      "Streaming Test 🎥",
       "Big Buck Bunny 🐰",
       "For Bigger Blazes 🔥",
       "For Bigger Escapes 🚀",
@@ -24,7 +23,6 @@ export const fetchShorts = async (
     ];
 
     const videoDescriptions = [
-      "A test video stream for your viewing pleasure #testing",
       "The classic Big Buck Bunny animation #animation #classic",
       "Watch this amazing video about blazes! #video #cool",
       "An exciting escape sequence #action #adventure",
@@ -48,6 +46,8 @@ export const fetchShorts = async (
         duration: "0:30",
         description: videoDescriptions[videoIdx],
         createdAt: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
+        category: category || 'entertainment',
+        tags: ['demo', 'video']
       };
     });
 
