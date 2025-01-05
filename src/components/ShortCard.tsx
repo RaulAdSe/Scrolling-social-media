@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ShortCardProps } from '../types/content';
-import { VideoCategory } from '../types/content';
 import { 
   Heart, 
   MessageCircle, 
@@ -8,7 +7,8 @@ import {
   VolumeX, 
   Volume2, 
   Pause, 
-  Play 
+  Play,
+  Info
 } from 'lucide-react';
 
 export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false }) => {
@@ -21,9 +21,11 @@ export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false })
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(short.likes);
   const [isDoubleTapLiking, setIsDoubleTapLiking] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const doubleTapTimer = useRef<NodeJS.Timeout | undefined>(undefined);
   const lastTapTime = useRef(0);
 
+  // Video playback control effects
   useEffect(() => {
     if (videoRef.current) {
       if (isActive) {
@@ -44,6 +46,7 @@ export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false })
     }
   }, [isActive]);
 
+  // Video progress tracking
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -108,7 +111,6 @@ export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false })
     const DOUBLE_TAP_DELAY = 300;
 
     if (tapLength < DOUBLE_TAP_DELAY) {
-      // Double tap detected
       handleLike();
       setIsDoubleTapLiking(true);
       if (doubleTapTimer.current) {
@@ -125,6 +127,18 @@ export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false })
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+  };
+
+  // Get category color
+  const getCategoryColor = () => {
+    const colors: Record<string, string> = {
+      music: 'bg-purple-500',
+      sports: 'bg-green-500',
+      gaming: 'bg-blue-500',
+      education: 'bg-yellow-500',
+      entertainment: 'bg-pink-500'
+    };
+    return colors[short.category] || 'bg-gray-500';
   };
 
   return (
@@ -150,105 +164,119 @@ export const ShortCard: React.FC<ShortCardProps> = ({ short, isActive = false })
           </div>
         )}
 
-        {/* Video Controls */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent">
+        {/* Info Overlay */}
+        {showInfo && (
+          <div className="absolute inset-0 bg-black/80 p-4 flex flex-col justify-center">
+            <h3 className="text-white font-semibold mb-2">Video Information</h3>
+            <p className="text-white/90 mb-1">Category: {short.category}</p>
+            <p className="text-white/90 mb-1">Duration: {short.duration}</p>
+            <p className="text-white/90 mb-1">Tags: {short.tags.join(', ')}</p>
+            <p className="text-white/90">Views: {short.views.toLocaleString()}</p>
+          </div>
+        )}
+
+        {/* Bottom Controls Container */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent pt-20 pb-6">
           {/* Progress Bar */}
-          <div 
-            ref={progressRef}
-            className="w-full h-1 bg-gray-600 rounded cursor-pointer mb-4"
-            onClick={handleProgressBarClick}
-          >
+          <div className="px-4 mb-4">
             <div 
-              className="h-full bg-white rounded"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {/* Controls Row */}
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePlayPause();
-              }}
-              className="bg-black/40 p-2 rounded-full"
+              ref={progressRef}
+              className="w-full h-1 bg-gray-600 rounded cursor-pointer"
+              onClick={handleProgressBarClick}
             >
-              {isPlaying ? (
-                <Pause className="w-6 h-6 text-white" />
-              ) : (
-                <Play className="w-6 h-6 text-white" />
-              )}
-            </button>
-
-            <div className="flex items-center gap-4">
-              <span className="text-white text-sm">
-                {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMute();
-                }}
-                className="bg-black/40 p-2 rounded-full"
-              >
-                {isMuted ? (
-                  <VolumeX className="w-6 h-6 text-white" />
-                ) : (
-                  <Volume2 className="w-6 h-6 text-white" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* User Info */}
-          <div className="flex items-center mb-4">
-            <img
-              src={short.userAvatar}
-              alt={short.username}
-              className="w-8 h-8 rounded-full mr-2"
-            />
-            <span className="text-white font-medium">@{short.username}</span>
-          </div>
-          
-          {/* Title and Description */}
-          <h2 className="text-white font-semibold mb-2">{short.title}</h2>
-          <p className="text-white/80 text-sm">{short.description}</p>
-        </div>
-
-        {/* Right side buttons */}
-        <div className="absolute right-4 bottom-20 flex flex-col items-center gap-6">
-          {/* Like Button */}
-          <button 
-            className="flex flex-col items-center"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleLike();
-            }}
-          >
-            <div className="bg-black/40 p-2 rounded-full">
-              <Heart 
-                className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-white'}`}
-                fill={isLiked ? 'currentColor' : 'none'}
+              <div 
+                className="h-full bg-white rounded"
+                style={{ width: `${progress}%` }}
               />
             </div>
-            <span className="text-white text-sm mt-1">{likeCount}</span>
-          </button>
+          </div>
 
-          {/* Comment Button */}
-          <button className="flex flex-col items-center">
-            <div className="bg-black/40 p-2 rounded-full">
-              <MessageCircle className="w-6 h-6 text-white" />
+          {/* Main Content Area */}
+          <div className="px-4">
+            {/* User Info and Title */}
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <img
+                  src={short.userAvatar}
+                  alt={short.username}
+                  className="w-8 h-8 rounded-full"
+                />
+                <span className="text-white font-medium">@{short.username}</span>
+              </div>
+              <h2 className="text-white font-semibold text-lg">{short.title}</h2>
+              <p className="text-white/80 text-sm mt-1">{short.description}</p>
             </div>
-            <span className="text-white text-sm mt-1">Comments</span>
-          </button>
 
-          {/* Share Button */}
-          <button className="flex flex-col items-center">
-            <div className="bg-black/40 p-2 rounded-full">
-              <Share2 className="w-6 h-6 text-white" />
+            {/* Bottom Controls */}
+            <div className="flex items-center justify-between">
+              {/* Left Controls */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    togglePlayPause();
+                  }}
+                  className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                >
+                  {isPlaying ? (
+                    <Pause className="w-5 h-5 text-white" />
+                  ) : (
+                    <Play className="w-5 h-5 text-white" />
+                  )}
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleMute();
+                  }}
+                  className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                >
+                  {isMuted ? (
+                    <VolumeX className="w-5 h-5 text-white" />
+                  ) : (
+                    <Volume2 className="w-5 h-5 text-white" />
+                  )}
+                </button>
+
+                <span className="text-white/80 text-sm">
+                  {formatTime(videoRef.current?.currentTime || 0)} / {formatTime(duration)}
+                </span>
+              </div>
+
+              {/* Right Controls */}
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleLike();
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <Heart 
+                    className={`w-6 h-6 ${isLiked ? 'text-red-500' : 'text-white'}`}
+                    fill={isLiked ? 'currentColor' : 'none'}
+                  />
+                  <span className="text-white text-sm">{likeCount.toLocaleString()}</span>
+                </button>
+
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowInfo(!showInfo);
+                  }}
+                  className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors"
+                >
+                  <Info className="w-5 h-5 text-white" />
+                </button>
+              </div>
             </div>
-            <span className="text-white text-sm mt-1">Share</span>
-          </button>
+          </div>
+        </div>
+
+        {/* Category Badge */}
+        <div className={`absolute top-4 right-4 px-3 py-1 rounded-full ${getCategoryColor()} text-white text-sm font-medium`}>
+          {short.category}
         </div>
       </div>
     </div>
